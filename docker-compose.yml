@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:18
     container_name: postgres_securenotes
     environment:
       POSTGRES_USER: dbadmin
@@ -28,7 +28,7 @@ services:
                -c wal_buffers=16MB
                -c default_statistics_target=100
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres_user -d postgres_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U dbadmin -d securenotes" ]
       interval: 30s
       timeout: 10s
       retries: 5

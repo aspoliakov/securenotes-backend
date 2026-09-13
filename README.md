@@ -4,17 +4,9 @@ Backend for the KMP App [SecureNotes](https://github.com/aspoliakov/securenotes)
 
 # Setup
 
-Setup python env:
+Dependencies are managed with [uv](https://docs.astral.sh/uv/). Install all dependencies (creates `.venv` targeting Python 3.13):
 
-> python -m venv env
-
-Activate python env:
-
-> source env/bin/activate.fish
-
-Install all dependencies:
-
-> pip install -r req.txt
+> uv sync
 
 Setup PostgreSQL config. Create a file ".env" in the root directory with the following contents (**replace values**):
 
@@ -32,18 +24,14 @@ Run PostgreSQL in Docker (first install docker-compose):
 
 > docker-compose up -d
 
-Create DB initial revision:
+Apply migrations:
 
-> alembic revision --autogenerate -m "Initial revision"
-
-Upgrade DB:
-
-> alembic upgrade head
+> uv run alembic upgrade head
 
 Run app in dev environment:
 
-> fastapi dev app/main.py --host 0.0.0.0 --port 8000
+> uv run fastapi dev app/main.py --host 0.0.0.0 --port 8000
 
 Run app via uvicorn:
 
-> uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+> uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

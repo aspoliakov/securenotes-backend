@@ -1,16 +1,14 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
+import jwt
 from fastapi import HTTPException, status
-from jose import jwt
-from passlib.context import CryptContext
 
 from app.config import get_auth_data
 from app.users.data.user_db import UserDB
 from app.users.data.users_dao import UsersDAO
 from app.users.schemas import UserRegisterRequest, UserAuthRequest, UserAuthResponse, user_db_to_user_response
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 async def user_register(request: UserRegisterRequest) -> UserAuthResponse:
@@ -56,11 +54,11 @@ async def user_authenticate(request: UserAuthRequest) -> UserAuthResponse:
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 
 def create_access_token_with_user_id(user_id: str) -> str:
@@ -77,7 +75,7 @@ def create_access_token(data: dict) -> str:
     jwt_data.update({"expires_at": expires_at.isoformat()})
     auth_data = get_auth_data()
     encode_jwt = jwt.encode(
-        claims=jwt_data,
+        payload=jwt_data,
         key=auth_data['secret_key'],
         algorithm=auth_data['algorithm'],
     )

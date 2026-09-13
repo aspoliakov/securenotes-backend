@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
+import jwt
 from fastapi import HTTPException, status, Depends, Header
-from jose import jwt, JWTError
 
 from app.config import get_auth_data
 from app.users.data.user_db import UserDB
@@ -25,11 +25,11 @@ async def get_user_by_token(token: str = Depends(token_checker)) -> UserDB:
     try:
         auth_data = get_auth_data()
         payload = jwt.decode(
-            token=token,
+            jwt=token,
             key=auth_data['secret_key'],
             algorithms=[auth_data['algorithm']],
         )
-    except JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="access_token is not valid",
