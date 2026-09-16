@@ -12,6 +12,7 @@ sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
 from app.database import DATABASE_URL, Base
 from app.users.data.user_db import UserDB
+from app.folders.data.folder_db import FolderDB
 from app.notes.data.note_db import NoteDB
 from app.keys.data.key_db import KeyDB
 
