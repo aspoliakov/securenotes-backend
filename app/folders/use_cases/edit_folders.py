@@ -42,6 +42,7 @@ async def create_new_folder(
         "parent_id": request.parent_id,
         "key_id": request.key_id,
         "payload": request.payload,
+        "order": request.order,
     }
     folder_db: FolderDB = await FoldersDAO.insert(**folder_db_dict)
     if folder_db:
@@ -67,6 +68,7 @@ async def update_existing_folder(
         parent_id=request.parent_id,
         key_id=request.key_id,
         payload=request.payload,
+        order=request.order,
     )
     if check:
         updated_folder_db: FolderDB = await FoldersDAO.get_by_id_or_none(request.folder_id)

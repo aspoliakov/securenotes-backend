@@ -38,6 +38,7 @@ async def create_new_note(
         "folder_id": request.folder_id,
         "key_id": request.key_id,
         "payload": request.payload,
+        "order": request.order,
     }
     note_db: NoteDB = await NotesDAO.insert(**note_db_dict)
     if note_db:
@@ -62,6 +63,7 @@ async def update_existing_note(
         filter_by={'item_id': request.note_id},
         folder_id=request.folder_id,
         payload=request.payload,
+        order=request.order,
     )
     if check:
         updated_note_db: NoteDB = await NotesDAO.get_by_id_or_none(request.note_id)

@@ -12,6 +12,7 @@ class FolderResponse(BaseModel):
     updated_at: datetime = Field(description="date of folder update")
     key_id: str = Field(description="id of the key with which the folder is encrypted")
     payload: str = Field(description="folder encrypted payload")
+    order: float = Field(description="sort position within the parent folder")
 
 
 class FoldersGetResponse(BaseModel):
@@ -23,6 +24,7 @@ class FolderPostRequest(BaseModel):
     parent_id: str | None = Field(default=None, description="id of the parent folder, null if root-level")
     key_id: str = Field(description="id of the key with which the folder is encrypted")
     payload: str = Field(description="folder encrypted payload")
+    order: float = Field(description="sort position within the parent folder")
 
 
 class FolderPostResponse(BaseModel):
@@ -42,4 +44,5 @@ def folder_db_to_folder_response(folder_db: FolderDB):
         updated_at=folder_db.updated_at,
         key_id=folder_db.key_id,
         payload=folder_db.payload,
+        order=folder_db.order,
     )

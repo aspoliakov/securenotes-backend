@@ -12,6 +12,7 @@ class NoteResponse(BaseModel):
     updated_at: datetime = Field(description="date of note update")
     key_id: str = Field(description="id of the key with which the note is encrypted")
     payload: str = Field(description="note encrypted payload")
+    order: float = Field(description="sort position within the parent folder")
 
 
 class NotesGetResponse(BaseModel):
@@ -23,6 +24,7 @@ class NotePostRequest(BaseModel):
     folder_id: str | None = Field(default=None, description="id of the folder the note belongs to, null if root-level")
     key_id: str = Field(description="id of the key with which the note is encrypted")
     payload: str = Field(description="note encrypted payload")
+    order: float = Field(description="sort position within the parent folder")
 
 
 class NotePostResponse(BaseModel):
@@ -42,4 +44,5 @@ def note_db_to_note_response(note_db: NoteDB):
         updated_at=note_db.updated_at,
         key_id=note_db.key_id,
         payload=note_db.payload,
+        order=note_db.order,
     )
