@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     SECRET_KEY: str
     ALGORITHM: str
+    GOOGLE_WEB_CLIENT_ID: str
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
     )
@@ -30,3 +31,7 @@ def get_auth_data():
         "secret_key": settings.SECRET_KEY,
         "algorithm": settings.ALGORITHM,
     }
+
+
+def get_google_client_id() -> str:
+    return settings.GOOGLE_WEB_CLIENT_ID

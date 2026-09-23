@@ -25,6 +25,10 @@ class UserAuthRequest(BaseModel):
     password: str = Field(description="user password")
 
 
+class GoogleAuthRequest(BaseModel):
+    id_token: str = Field(description="Google ID token from Credential Manager")
+
+
 class UserAuthResponse(BaseModel):
     message: str = Field(description="auth result message")
     user: UserResponse = Field(description="user data")

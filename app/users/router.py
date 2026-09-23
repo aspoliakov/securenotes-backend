@@ -3,8 +3,14 @@ from fastapi.params import Depends
 
 from app.users.data.user_db import UserDB
 from app.users.dependencies import get_user_by_token
-from app.users.schemas import UserRegisterRequest, UserAuthRequest, UserResponse, UserAuthResponse
-from app.users.use_cases.auth import user_register, user_authenticate
+from app.users.schemas import (
+    UserRegisterRequest,
+    UserAuthRequest,
+    GoogleAuthRequest,
+    UserResponse,
+    UserAuthResponse,
+)
+from app.users.use_cases.auth import user_register, user_authenticate, user_authenticate_google
 from app.users.use_cases.get_users import get_all
 
 router = APIRouter(prefix='/api/v1/users', tags=["Users public route"])
@@ -25,3 +31,8 @@ async def register(request: UserRegisterRequest) -> UserAuthResponse:
 @router.post("/authenticate", summary="Authenticate User")
 async def authenticate(request: UserAuthRequest) -> UserAuthResponse:
     return await user_authenticate(request)
+
+
+@router.post("/authenticate/google", summary="Authenticate User with Google")
+async def authenticate_google(request: GoogleAuthRequest) -> UserAuthResponse:
+    return await user_authenticate_google(request)

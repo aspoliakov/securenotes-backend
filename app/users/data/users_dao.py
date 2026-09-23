@@ -15,3 +15,10 @@ class UsersDAO(BaseDAO):
             query = select(cls.model).filter_by(email=email)
             result = await session.execute(query)
             return result.scalar_one_or_none()
+
+    @classmethod
+    async def get_by_provider_id(cls, provider: str, provider_id: str):
+        async with async_session_maker() as session:
+            query = select(cls.model).filter_by(provider=provider, provider_id=provider_id)
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
