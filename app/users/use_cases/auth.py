@@ -48,7 +48,17 @@ async def user_register(request: UserRegisterRequest) -> UserAuthResponse:
 
 async def user_authenticate(request: UserAuthRequest) -> UserAuthResponse:
     user_db = await UsersDAO.get_by_email(email=request.email)
-    if not user_db or verify_password(plain_password=request.password, hashed_password=user_db.password) is False:
+    if not user_db:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="wrong credentials",
+        )
+    if user_db.password is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="account uses google sign-in",
+        )
+    if not verify_password(plain_password=request.password, hashed_password=user_db.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="wrong credentials",
