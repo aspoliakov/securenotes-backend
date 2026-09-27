@@ -85,19 +85,22 @@ async def user_authenticate_google(request: GoogleAuthRequest) -> UserAuthRespon
     if not user_db:
         existing_by_email = await UsersDAO.get_by_email(email=idinfo["email"])
         if existing_by_email:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="email already registered with password",
+            await UsersDAO.update(
+                filter_by={"item_id": existing_by_email.item_id},
+                provider="google",
+                provider_id=provider_id,
             )
-        user_db_dict = {
-            "email": idinfo["email"],
-            "password": None,
-            "item_id": str(uuid.uuid4()),
-            "avatar": None,
-            "provider": "google",
-            "provider_id": provider_id,
-        }
-        user_db = await UsersDAO.insert(**user_db_dict)
+            user_db = await UsersDAO.get_by_id_or_none(existing_by_email.item_id)
+        else:
+            user_db_dict = {
+                "email": idinfo["email"],
+                "password": None,
+                "item_id": str(uuid.uuid4()),
+                "avatar": None,
+                "provider": "google",
+                "provider_id": provider_id,
+            }
+            user_db = await UsersDAO.insert(**user_db_dict)
 
     access_token = create_access_token_with_user_id(user_db.item_id)
     return UserAuthResponse(
