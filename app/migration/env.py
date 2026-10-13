@@ -15,6 +15,7 @@ from app.users.data.user_db import UserDB
 from app.folders.data.folder_db import FolderDB
 from app.notes.data.note_db import NoteDB
 from app.keys.data.key_db import KeyDB
+from app.settings.data.setting_db import SettingDB
 
 config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)

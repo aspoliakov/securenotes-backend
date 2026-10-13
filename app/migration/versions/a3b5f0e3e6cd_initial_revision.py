@@ -23,9 +23,11 @@ def upgrade() -> None:
     op.create_table('users',
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('login', sa.String(), nullable=True),
-    sa.Column('password', sa.String(), nullable=False),
+    sa.Column('password', sa.String(), nullable=True),
     sa.Column('role', sa.Enum('admin', 'user', name='user_role'), nullable=False),
     sa.Column('avatar', sa.Text(), nullable=True),
+    sa.Column('provider', sa.String(), nullable=True),
+    sa.Column('provider_id', sa.String(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('item_id', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -33,7 +35,8 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('item_id'),
-    sa.UniqueConstraint('login')
+    sa.UniqueConstraint('login'),
+    sa.UniqueConstraint('provider', 'provider_id', name='uq_users_provider_provider_id')
     )
     op.create_table('keys',
     sa.Column('owner_id', sa.String(), nullable=False),
@@ -78,10 +81,24 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('item_id')
     )
+    op.create_table('user_settings',
+    sa.Column('owner_id', sa.String(), nullable=False),
+    sa.Column('key', sa.String(length=64), nullable=False),
+    sa.Column('value', sa.Text(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('item_id', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['owner_id'], ['users.item_id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('item_id'),
+    sa.UniqueConstraint('owner_id', 'key', name='uq_user_settings_owner_id_key')
+    )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.drop_table('user_settings')
     op.drop_table('notes')
     op.drop_table('folders')
     op.drop_table('keys')
