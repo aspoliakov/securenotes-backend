@@ -27,6 +27,31 @@ class SessionsDAO(BaseDAO):
             return result.scalar_one_or_none()
 
     @classmethod
+    async def get_active_by_owner(cls, owner_id: str, now: datetime):
+        async with async_session_maker() as session:
+            query = (
+                select(cls.model)
+                .where(cls.model.owner_id == owner_id, cls.model.expires_at >= now)
+                .order_by(cls.model.created_at.desc())
+            )
+            result = await session.execute(query)
+            return result.scalars().all()
+
+    @classmethod
+    async def delete_owned(cls, owner_id: str, item_id: str):
+        return await cls._delete_where(
+            cls.model.owner_id == owner_id,
+            cls.model.item_id == item_id,
+        )
+
+    @classmethod
+    async def delete_all_except(cls, owner_id: str, item_id: str):
+        return await cls._delete_where(
+            cls.model.owner_id == owner_id,
+            cls.model.item_id != item_id,
+        )
+
+    @classmethod
     async def delete_by_refresh_token_hash(cls, token_hash: str):
         await cls._delete_where(
             or_(

@@ -7,8 +7,9 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 from app.config import get_auth_data
-from app.users.data.session_db import SessionDB
+from app.users.data.session_db import SessionDB, DEVICE_NAME_LENGTH, PLATFORM_LENGTH, OS_VERSION_LENGTH
 from app.users.data.sessions_dao import SessionsDAO
+from app.users.schemas import DeviceInfo
 
 ACCESS_TOKEN_LIFETIME = timedelta(hours=24)
 
@@ -27,15 +28,19 @@ class IssuedSession:
     refresh_token: str
 
 
-async def create_session(user_id: str) -> IssuedSession:
+async def create_session(user_id: str, device: DeviceInfo | None) -> IssuedSession:
     now = datetime.now(timezone.utc)
     await SessionsDAO.delete_expired(owner_id=user_id, now=now)
     refresh_token = generate_refresh_token()
+    device = device or DeviceInfo()
     session = await SessionsDAO.insert(
         item_id=str(uuid.uuid4()),
         owner_id=user_id,
         refresh_token_hash=hash_token(refresh_token),
         expires_at=now + SESSION_LIFETIME,
+        device_name=truncate(device.device_name, DEVICE_NAME_LENGTH),
+        platform=truncate(device.platform, PLATFORM_LENGTH),
+        os_version=truncate(device.os_version, OS_VERSION_LENGTH),
     )
     return IssuedSession(
         session=session,
@@ -120,6 +125,10 @@ def create_access_token(session: SessionDB) -> str:
         key=auth_data['secret_key'],
         algorithm=auth_data['algorithm'],
     )
+
+
+def truncate(value: str | None, length: int) -> str | None:
+    return value[:length] if value else None
 
 
 def generate_refresh_token() -> str:

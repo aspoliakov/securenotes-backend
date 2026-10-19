@@ -37,12 +37,13 @@ async def user_register(request: UserRegisterRequest) -> UserAuthResponse:
     }
     user_db: UserDB = await UsersDAO.insert(**user_db_dict)
     if user_db:
-        issued_session = await create_session(user_db.item_id)
+        issued_session = await create_session(user_db.item_id, request.device)
         return UserAuthResponse(
             message="User registered",
             user=user_db_to_user_response(user_db),
             token=issued_session.access_token,
             refresh_token=issued_session.refresh_token,
+            session_id=issued_session.session.item_id,
         )
     else:
         raise HTTPException(
@@ -67,12 +68,13 @@ async def user_authenticate(request: UserAuthRequest) -> UserAuthResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="wrong credentials",
         )
-    issued_session = await create_session(user_db.item_id)
+    issued_session = await create_session(user_db.item_id, request.device)
     return UserAuthResponse(
         message="User registered",
         user=user_db_to_user_response(user_db),
         token=issued_session.access_token,
         refresh_token=issued_session.refresh_token,
+        session_id=issued_session.session.item_id,
     )
 
 
@@ -117,12 +119,13 @@ async def user_authenticate_google(request: GoogleAuthRequest) -> UserAuthRespon
             }
             user_db = await UsersDAO.insert(**user_db_dict)
 
-    issued_session = await create_session(user_db.item_id)
+    issued_session = await create_session(user_db.item_id, request.device)
     return UserAuthResponse(
         message="User registered",
         user=user_db_to_user_response(user_db),
         token=issued_session.access_token,
         refresh_token=issued_session.refresh_token,
+        session_id=issued_session.session.item_id,
     )
 
 
