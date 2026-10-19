@@ -94,10 +94,30 @@ def upgrade() -> None:
     sa.UniqueConstraint('item_id'),
     sa.UniqueConstraint('owner_id', 'key', name='uq_user_settings_owner_id_key')
     )
+    op.create_table('user_sessions',
+    sa.Column('owner_id', sa.String(), nullable=False),
+    sa.Column('refresh_token_hash', sa.String(length=64), nullable=False),
+    sa.Column('previous_refresh_token_hash', sa.String(length=64), nullable=True),
+    sa.Column('rotated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('item_id', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['owner_id'], ['users.item_id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('item_id'),
+    sa.UniqueConstraint('refresh_token_hash')
+    )
+    op.create_index(op.f('ix_user_sessions_owner_id'), 'user_sessions', ['owner_id'], unique=False)
+    op.create_index(op.f('ix_user_sessions_previous_refresh_token_hash'), 'user_sessions', ['previous_refresh_token_hash'], unique=False)
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.drop_index(op.f('ix_user_sessions_previous_refresh_token_hash'), table_name='user_sessions')
+    op.drop_index(op.f('ix_user_sessions_owner_id'), table_name='user_sessions')
+    op.drop_table('user_sessions')
     op.drop_table('user_settings')
     op.drop_table('notes')
     op.drop_table('folders')

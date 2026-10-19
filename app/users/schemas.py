@@ -33,6 +33,25 @@ class UserAuthResponse(BaseModel):
     message: str = Field(description="auth result message")
     user: UserResponse = Field(description="user data")
     token: str = Field(description="user access token")
+    refresh_token: str = Field(description="single-use token to get a new access token")
+
+
+class TokenRefreshRequest(BaseModel):
+    refresh_token: str = Field(description="current refresh token")
+
+
+class TokenRefreshResponse(BaseModel):
+    message: str = Field(description="refresh result message")
+    token: str = Field(description="new user access token")
+    refresh_token: str = Field(description="new refresh token, the sent one is no longer valid")
+
+
+class UserLogoutRequest(BaseModel):
+    refresh_token: str = Field(description="refresh token of the session to revoke")
+
+
+class UserLogoutResponse(BaseModel):
+    message: str = Field(description="logout result message")
 
 
 def user_db_to_user_response(user: UserDB):

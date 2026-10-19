@@ -9,8 +9,18 @@ from app.users.schemas import (
     GoogleAuthRequest,
     UserResponse,
     UserAuthResponse,
+    TokenRefreshRequest,
+    TokenRefreshResponse,
+    UserLogoutRequest,
+    UserLogoutResponse,
 )
-from app.users.use_cases.auth import user_register, user_authenticate, user_authenticate_google
+from app.users.use_cases.auth import (
+    user_register,
+    user_authenticate,
+    user_authenticate_google,
+    user_refresh_token,
+    user_logout,
+)
 from app.users.use_cases.get_users import get_all
 
 router = APIRouter(prefix='/api/v1/users', tags=["Users public route"])
@@ -36,3 +46,13 @@ async def authenticate(request: UserAuthRequest) -> UserAuthResponse:
 @router.post("/authenticate/google", summary="Authenticate User with Google")
 async def authenticate_google(request: GoogleAuthRequest) -> UserAuthResponse:
     return await user_authenticate_google(request)
+
+
+@router.post("/refresh", summary="Exchange refresh token for a new token pair")
+async def refresh(request: TokenRefreshRequest) -> TokenRefreshResponse:
+    return await user_refresh_token(request)
+
+
+@router.post("/logout", summary="Revoke User session")
+async def logout(request: UserLogoutRequest) -> UserLogoutResponse:
+    return await user_logout(request)

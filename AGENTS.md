@@ -33,6 +33,7 @@ DB_USER=...
 DB_PASSWORD=...
 SECRET_KEY=...
 ALGORITHM=HS256
+GOOGLE_WEB_CLIENT_ID=...
 ```
 Config is loaded via `app/config.py` (`pydantic-settings`); this is the only place env vars are read.
 
@@ -57,7 +58,13 @@ Routers are wired up in `app/main.py`. Follow this same file layout when adding 
 
 `app/data/base_dao.py` (`BaseDAO`) provides generic `get_all`, `get_by_id_or_none` (looked up by `item_id`), `insert`, `update`, `delete`, each opening its own `async_session_maker()` session. Feature DAOs subclass it and only add feature-specific queries (e.g. `UsersDAO.get_by_email`).
 
-**Auth**: JWT-based, via `app.users.dependencies.get_user_by_token` (a FastAPI dependency reading the `access_token` header, not `Authorization`). Token creation/verification (`PyJWT`) and password hashing (`bcrypt`, used directly — no `passlib`) live in `app.users.use_cases.auth`. Tokens are keyed only by `user_id` and expire after 30 days (`expires_at` embedded in the JWT payload, checked manually since no standard `exp` claim is set). Protected routes take `user: UserDB = Depends(get_user_by_token)`.
+**Auth**: access + refresh tokens bound to a server-side session (`app.users.use_cases.sessions`, `SessionDB` in `user_sessions` — one row per signed-in device). Register/authenticate call `create_session`, which returns an `IssuedSession` (the session plus the freshly issued tokens; the plaintext refresh token exists only there, the DB stores its SHA-256 hash).
+- Access token: JWT (`PyJWT`, `SECRET_KEY`/`ALGORITHM`), 24 h, standard `exp` plus `sub` (user id) and `sid` (session `item_id`). Sent in the `access_token` header (not `Authorization`) and checked by the `app.users.dependencies.get_user_by_token` dependency: signature/`exp` first, then the session row must still exist, so deleting it revokes the token immediately.
+- Refresh token: opaque `secrets.token_urlsafe(32)`, single-use. `POST /api/v1/users/refresh` rotates it and extends the session (sliding 90 days). Replaying a rotated-out token revokes the whole session (theft detection), except within a 30 s grace window meant for a client retrying after a lost response.
+- `POST /api/v1/users/logout` takes the refresh token and deletes its session; idempotent (200 for an unknown token).
+- Expired sessions of a user are purged when that user gets a new one.
+
+Password hashing (`bcrypt`, used directly — no `passlib`) lives in `app.users.use_cases.auth`. Protected routes take `user: UserDB = Depends(get_user_by_token)`.
 
 **Authorization model**: ownership-based — notes and keys have an `owner_id` FK to `users.item_id`; use_cases check `resource.owner_id == user.item_id` and raise 403 otherwise. `Role` (admin/user) enum on `UserDB` only gates the admin-only "get all users" endpoint.
 

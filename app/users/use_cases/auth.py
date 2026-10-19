@@ -1,19 +1,22 @@
 import uuid
-from datetime import datetime, timedelta, timezone
 
 import bcrypt
-import jwt
 from fastapi import HTTPException, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 
-from app.config import get_auth_data, get_google_client_id
+from app.config import get_google_client_id
 from app.users.data.user_db import UserDB
 from app.users.data.users_dao import UsersDAO
+from app.users.use_cases.sessions import create_session, refresh_session, revoke_session
 from app.users.schemas import (
     UserRegisterRequest,
     UserAuthRequest,
     UserAuthResponse,
+    TokenRefreshRequest,
+    TokenRefreshResponse,
+    UserLogoutRequest,
+    UserLogoutResponse,
     GoogleAuthRequest,
     user_db_to_user_response,
 )
@@ -34,11 +37,12 @@ async def user_register(request: UserRegisterRequest) -> UserAuthResponse:
     }
     user_db: UserDB = await UsersDAO.insert(**user_db_dict)
     if user_db:
-        access_token = create_access_token_with_user_id(user_db.item_id)
+        issued_session = await create_session(user_db.item_id)
         return UserAuthResponse(
             message="User registered",
             user=user_db_to_user_response(user_db),
-            token=access_token,
+            token=issued_session.access_token,
+            refresh_token=issued_session.refresh_token,
         )
     else:
         raise HTTPException(
@@ -63,11 +67,12 @@ async def user_authenticate(request: UserAuthRequest) -> UserAuthResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="wrong credentials",
         )
-    access_token = create_access_token_with_user_id(user_db.item_id)
+    issued_session = await create_session(user_db.item_id)
     return UserAuthResponse(
         message="User registered",
         user=user_db_to_user_response(user_db),
-        token=access_token,
+        token=issued_session.access_token,
+        refresh_token=issued_session.refresh_token,
     )
 
 
@@ -112,12 +117,33 @@ async def user_authenticate_google(request: GoogleAuthRequest) -> UserAuthRespon
             }
             user_db = await UsersDAO.insert(**user_db_dict)
 
-    access_token = create_access_token_with_user_id(user_db.item_id)
+    issued_session = await create_session(user_db.item_id)
     return UserAuthResponse(
         message="User registered",
         user=user_db_to_user_response(user_db),
-        token=access_token,
+        token=issued_session.access_token,
+        refresh_token=issued_session.refresh_token,
     )
+
+
+async def user_refresh_token(request: TokenRefreshRequest) -> TokenRefreshResponse:
+    issued_session = await refresh_session(request.refresh_token)
+    if not issued_session:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="refresh_token is not valid",
+        )
+    return TokenRefreshResponse(
+        message="Token refreshed",
+        token=issued_session.access_token,
+        refresh_token=issued_session.refresh_token,
+    )
+
+
+async def user_logout(request: UserLogoutRequest) -> UserLogoutResponse:
+    # idempotent: an unknown or already revoked token is not an error, the client is logged out either way
+    await revoke_session(request.refresh_token)
+    return UserLogoutResponse(message="User logged out")
 
 
 def get_password_hash(password: str) -> str:
@@ -126,24 +152,3 @@ def get_password_hash(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
-
-
-def create_access_token_with_user_id(user_id: str) -> str:
-    return create_access_token(
-        {
-            "user_id": user_id,
-        }
-    )
-
-
-def create_access_token(data: dict) -> str:
-    jwt_data = data.copy()
-    expires_at = datetime.now(timezone.utc) + timedelta(days=30)
-    jwt_data.update({"expires_at": expires_at.isoformat()})
-    auth_data = get_auth_data()
-    encode_jwt = jwt.encode(
-        payload=jwt_data,
-        key=auth_data['secret_key'],
-        algorithm=auth_data['algorithm'],
-    )
-    return encode_jwt
