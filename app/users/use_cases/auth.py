@@ -130,7 +130,7 @@ async def user_authenticate_google(request: GoogleAuthRequest) -> UserAuthRespon
 
 
 async def user_refresh_token(request: TokenRefreshRequest) -> TokenRefreshResponse:
-    issued_session = await refresh_session(request.refresh_token)
+    issued_session = await refresh_session(request.refresh_token, request.app_version)
     if not issued_session:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -20,6 +20,7 @@ class DeviceInfo(BaseModel):
     device_name: str | None = Field(default=None, description="human-readable device name, e.g. Google Pixel 8")
     platform: str | None = Field(default=None, description="client platform, e.g. android or ios")
     os_version: str | None = Field(default=None, description="platform OS version")
+    app_version: str | None = Field(default=None, description="client app version")
 
 
 class UserRegisterRequest(BaseModel):
@@ -49,6 +50,7 @@ class UserAuthResponse(BaseModel):
 
 class TokenRefreshRequest(BaseModel):
     refresh_token: str = Field(description="current refresh token")
+    app_version: str | None = Field(default=None, description="client app version, updates the one stored on the session")
 
 
 class TokenRefreshResponse(BaseModel):
@@ -73,6 +75,7 @@ class UserSessionResponse(BaseModel):
     device_name: str | None = Field(description="device name reported at sign-in")
     platform: str | None = Field(description="client platform reported at sign-in")
     os_version: str | None = Field(description="OS version reported at sign-in")
+    app_version: str | None = Field(description="client app version reported at sign-in or the last token refresh")
 
 
 class SessionTerminateResponse(BaseModel):
@@ -94,6 +97,7 @@ def session_db_to_user_session_response(session: SessionDB):
         device_name=session.device_name,
         platform=session.platform,
         os_version=session.os_version,
+        app_version=session.app_version,
     )
 
 

@@ -7,7 +7,8 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 from app.config import get_auth_data
-from app.users.data.session_db import SessionDB, DEVICE_NAME_LENGTH, PLATFORM_LENGTH, OS_VERSION_LENGTH
+from app.users.data.session_db import SessionDB, DEVICE_NAME_LENGTH, PLATFORM_LENGTH, OS_VERSION_LENGTH, \
+    APP_VERSION_LENGTH
 from app.users.data.sessions_dao import SessionsDAO
 from app.users.schemas import DeviceInfo
 
@@ -41,6 +42,7 @@ async def create_session(user_id: str, device: DeviceInfo | None) -> IssuedSessi
         device_name=truncate(device.device_name, DEVICE_NAME_LENGTH),
         platform=truncate(device.platform, PLATFORM_LENGTH),
         os_version=truncate(device.os_version, OS_VERSION_LENGTH),
+        app_version=truncate(device.app_version, APP_VERSION_LENGTH),
     )
     return IssuedSession(
         session=session,
@@ -49,7 +51,7 @@ async def create_session(user_id: str, device: DeviceInfo | None) -> IssuedSessi
     )
 
 
-async def refresh_session(refresh_token: str) -> IssuedSession | None:
+async def refresh_session(refresh_token: str, app_version: str | None) -> IssuedSession | None:
     """Rotates the refresh token. None means the session is gone and the client has to sign in again."""
     now = datetime.now(timezone.utc)
     token_hash = hash_token(refresh_token)
@@ -71,6 +73,7 @@ async def refresh_session(refresh_token: str) -> IssuedSession | None:
         return None
 
     new_refresh_token = generate_refresh_token()
+    app_version_update = {"app_version": truncate(app_version, APP_VERSION_LENGTH)} if app_version else {}
     updated = await SessionsDAO.update(
         # compare-and-set: a concurrent refresh with the same token must not rotate twice
         filter_by={"item_id": session.item_id, "refresh_token_hash": session.refresh_token_hash},
@@ -78,6 +81,7 @@ async def refresh_session(refresh_token: str) -> IssuedSession | None:
         previous_refresh_token_hash=token_hash,
         rotated_at=rotated_at,
         expires_at=now + SESSION_LIFETIME,
+        **app_version_update,
     )
     if not updated:
         return None

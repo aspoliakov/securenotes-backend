@@ -11,6 +11,7 @@ TOKEN_HASH_LENGTH = 64
 DEVICE_NAME_LENGTH = 128
 PLATFORM_LENGTH = 16
 OS_VERSION_LENGTH = 32
+APP_VERSION_LENGTH = 32
 
 
 class SessionDB(Base):
@@ -25,6 +26,7 @@ class SessionDB(Base):
     device_name: Mapped[str | None] = mapped_column(String(DEVICE_NAME_LENGTH))
     platform: Mapped[str | None] = mapped_column(String(PLATFORM_LENGTH))
     os_version: Mapped[str | None] = mapped_column(String(OS_VERSION_LENGTH))
+    app_version: Mapped[str | None] = mapped_column(String(APP_VERSION_LENGTH))
 
     def __repr__(self):
         return f"{self.__class__.__name__}(item_id={self.id})"
