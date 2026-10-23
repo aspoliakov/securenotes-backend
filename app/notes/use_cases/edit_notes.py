@@ -1,4 +1,7 @@
+from datetime import datetime, timezone
+
 from fastapi import HTTPException, status
+from sqlalchemy import func
 
 from app.folders.data.folder_db import FolderDB
 from app.folders.data.folders_dao import FoldersDAO
@@ -22,7 +25,7 @@ async def create_or_update_note(
             detail="access denied",
         )
     else:
-        return await update_existing_note(request, user)
+        return await update_existing_note(request, user, note_db)
 
 
 async def create_new_note(
@@ -55,15 +58,22 @@ async def create_new_note(
 async def update_existing_note(
         request: NotePostRequest,
         user: UserDB,
+        note_db: NoteDB,
 ) -> NotePostResponse:
     if request.folder_id is not None:
         await _validate_note_folder(request.folder_id, user)
 
+    values = {
+        "folder_id": request.folder_id,
+        "key_id": request.key_id,
+        "payload": request.payload,
+        "order": request.order,
+    }
+    if _to_utc_millis(request.content_updated_at) != _to_utc_millis(note_db.content_updated_at):
+        values["content_updated_at"] = func.now()
     check = await NotesDAO.update(
         filter_by={'item_id': request.note_id},
-        folder_id=request.folder_id,
-        payload=request.payload,
-        order=request.order,
+        **values,
     )
     if check:
         updated_note_db: NoteDB = await NotesDAO.get_by_id_or_none(request.note_id)
@@ -115,3 +125,10 @@ async def _validate_note_folder(folder_id: str, user: UserDB) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="access denied",
         )
+
+
+def _to_utc_millis(value: datetime) -> datetime:
+    """Naive UTC truncated to milliseconds: the client keeps timestamps in epoch millis."""
+    if value.tzinfo is not None:
+        value = value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value.replace(microsecond=value.microsecond // 1000 * 1000)

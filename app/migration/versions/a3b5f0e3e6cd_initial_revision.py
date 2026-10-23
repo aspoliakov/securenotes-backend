@@ -72,6 +72,7 @@ def upgrade() -> None:
     sa.Column('key_id', sa.Text(), nullable=False),
     sa.Column('payload', sa.Text(), nullable=False),
     sa.Column('order_index', sa.Float(), nullable=False, server_default='0'),
+    sa.Column('content_updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('item_id', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),

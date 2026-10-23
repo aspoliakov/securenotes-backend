@@ -70,4 +70,6 @@ Password hashing (`bcrypt`, used directly — no `passlib`) lives in `app.users.
 
 **Authorization model**: ownership-based — notes and keys have an `owner_id` FK to `users.item_id`; use_cases check `resource.owner_id == user.item_id` and raise 403 otherwise. `Role` (admin/user) enum on `UserDB` only gates the admin-only "get all users" endpoint.
 
+**Notes**: `created_at` and `content_updated_at` are server-owned. `content_updated_at` is the user-visible "edited" time: set on creation; `POST /api/v1/notes/save` takes the client's `content_updated_at` only to compare it (to the millisecond) with the stored one, and a different value means the client changed the content, so the column moves to the DB `now()` (the payload is encrypted with a random nonce, so the server can't detect a content change itself). `updated_at` is technical and moves on any update.
+
 **Migrations**: Alembic, configured in `app/migration/env.py` to run async (`async_engine_from_config` + `run_sync`), importing `Base` and every model module explicitly so `target_metadata` picks up all tables — new feature models must be imported there too. DB URL comes from `app.database.DATABASE_URL`, not `alembic.ini`.
