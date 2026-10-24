@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Text, Enum, UniqueConstraint
+from sqlalchemy import Integer, Text, Enum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base, str_uniq, str_uniq_nullable
@@ -24,6 +24,7 @@ class UserDB(Base):
     avatar: Mapped[str] = mapped_column(Text, nullable=True)
     provider: Mapped[str | None]
     provider_id: Mapped[str | None]
+    sync_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
 
     def __repr__(self):
         return f"{self.__class__.__name__}(item_id={self.id})"

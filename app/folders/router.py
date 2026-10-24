@@ -1,20 +1,12 @@
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from app.folders.schemas import FolderPostRequest, FoldersGetResponse, FolderPostResponse, FolderDeleteResponse
+from app.folders.schemas import FolderPostRequest, FolderPostResponse, FolderDeleteResponse
 from app.folders.use_cases.edit_folders import delete_existing_folder, create_or_update_folder
-from app.folders.use_cases.get_folders import get_all
 from app.users.data.user_db import UserDB
 from app.users.dependencies import get_user_by_token
 
 router = APIRouter(prefix='/api/v1/folders', tags=["Folders public route"])
-
-
-@router.get("/all", summary="Get all User folders")
-async def get_all_folders(
-        user: UserDB = Depends(get_user_by_token),
-) -> FoldersGetResponse:
-    return await get_all(user)
 
 
 @router.post("/save", summary="Create User folder with full JSON")

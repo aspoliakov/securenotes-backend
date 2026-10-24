@@ -28,6 +28,7 @@ def upgrade() -> None:
     sa.Column('avatar', sa.Text(), nullable=True),
     sa.Column('provider', sa.String(), nullable=True),
     sa.Column('provider_id', sa.String(), nullable=True),
+    sa.Column('sync_revision', sa.Integer(), server_default='0', nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('item_id', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -54,9 +55,11 @@ def upgrade() -> None:
     op.create_table('folders',
     sa.Column('owner_id', sa.String(), nullable=False),
     sa.Column('parent_id', sa.String(), nullable=True),
-    sa.Column('key_id', sa.Text(), nullable=False),
-    sa.Column('payload', sa.Text(), nullable=False),
+    sa.Column('key_id', sa.Text(), nullable=True),
+    sa.Column('payload', sa.Text(), nullable=True),
     sa.Column('order_index', sa.Float(), nullable=False, server_default='0'),
+    sa.Column('revision', sa.Integer(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('item_id', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -69,10 +72,12 @@ def upgrade() -> None:
     op.create_table('notes',
     sa.Column('owner_id', sa.String(), nullable=False),
     sa.Column('folder_id', sa.String(), nullable=True),
-    sa.Column('key_id', sa.Text(), nullable=False),
-    sa.Column('payload', sa.Text(), nullable=False),
+    sa.Column('key_id', sa.Text(), nullable=True),
+    sa.Column('payload', sa.Text(), nullable=True),
     sa.Column('order_index', sa.Float(), nullable=False, server_default='0'),
     sa.Column('content_updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('revision', sa.Integer(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('item_id', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -82,6 +87,8 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('item_id')
     )
+    op.create_index('ix_folders_owner_id_revision', 'folders', ['owner_id', 'revision'], unique=False)
+    op.create_index('ix_notes_owner_id_revision', 'notes', ['owner_id', 'revision'], unique=False)
     op.create_table('user_settings',
     sa.Column('owner_id', sa.String(), nullable=False),
     sa.Column('key', sa.String(length=64), nullable=False),
@@ -105,6 +112,7 @@ def upgrade() -> None:
     sa.Column('platform', sa.String(length=16), nullable=True),
     sa.Column('os_version', sa.String(length=32), nullable=True),
     sa.Column('app_version', sa.String(length=32), nullable=True),
+    sa.Column('synced_revision', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('item_id', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -124,7 +132,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_user_sessions_owner_id'), table_name='user_sessions')
     op.drop_table('user_sessions')
     op.drop_table('user_settings')
+    op.drop_index('ix_notes_owner_id_revision', table_name='notes')
     op.drop_table('notes')
+    op.drop_index('ix_folders_owner_id_revision', table_name='folders')
     op.drop_table('folders')
     op.drop_table('keys')
     op.drop_table('users')

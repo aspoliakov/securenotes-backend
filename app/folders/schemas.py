@@ -10,13 +10,10 @@ class FolderResponse(BaseModel):
     parent_id: str | None = Field(description="id of the parent folder, null if root-level")
     created_at: datetime = Field(description="date of folder creation")
     updated_at: datetime = Field(description="date of folder update")
-    key_id: str = Field(description="id of the key with which the folder is encrypted")
-    payload: str = Field(description="folder encrypted payload")
+    key_id: str | None = Field(description="id of the key with which the folder is encrypted, null if deleted")
+    payload: str | None = Field(description="folder encrypted payload, null if deleted")
     order: float = Field(description="sort position within the parent folder")
-
-
-class FoldersGetResponse(BaseModel):
-    folders: list[FolderResponse] = Field(description="all user's folders")
+    deleted_at: datetime | None = Field(description="date of folder deletion, null if not deleted")
 
 
 class FolderPostRequest(BaseModel):
@@ -45,4 +42,5 @@ def folder_db_to_folder_response(folder_db: FolderDB):
         key_id=folder_db.key_id,
         payload=folder_db.payload,
         order=folder_db.order,
+        deleted_at=folder_db.deleted_at,
     )

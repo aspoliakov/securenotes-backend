@@ -11,13 +11,10 @@ class NoteResponse(BaseModel):
     created_at: datetime = Field(description="date of note creation")
     updated_at: datetime = Field(description="date of the last update of the note record (technical)")
     content_updated_at: datetime = Field(description="date of the last note content change")
-    key_id: str = Field(description="id of the key with which the note is encrypted")
-    payload: str = Field(description="note encrypted payload")
+    key_id: str | None = Field(description="id of the key with which the note is encrypted, null if deleted")
+    payload: str | None = Field(description="note encrypted payload, null if deleted")
     order: float = Field(description="sort position within the parent folder")
-
-
-class NotesGetResponse(BaseModel):
-    notes: list[NoteResponse] = Field(description="all user's notes")
+    deleted_at: datetime | None = Field(description="date of note deletion, null if not deleted")
 
 
 class NotePostRequest(BaseModel):
@@ -52,4 +49,5 @@ def note_db_to_note_response(note_db: NoteDB):
         key_id=note_db.key_id,
         payload=note_db.payload,
         order=note_db.order,
+        deleted_at=note_db.deleted_at,
     )

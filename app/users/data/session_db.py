@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -27,6 +27,7 @@ class SessionDB(Base):
     platform: Mapped[str | None] = mapped_column(String(PLATFORM_LENGTH))
     os_version: Mapped[str | None] = mapped_column(String(OS_VERSION_LENGTH))
     app_version: Mapped[str | None] = mapped_column(String(APP_VERSION_LENGTH))
+    synced_revision: Mapped[int | None] = mapped_column(Integer)
 
     def __repr__(self):
         return f"{self.__class__.__name__}(item_id={self.id})"
